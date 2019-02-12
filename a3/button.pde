@@ -25,10 +25,11 @@ class Button {
     ellipse(x, y, w, h);
   }
   
-  boolean overButton() {
-   if (mouseX >= x - w/2 && mouseX <= x + w/2 && mouseY >= y - h/2 && mouseY <= y + h/2) {
+  boolean overButton(int mX, int mY) {
+   if (mX >= x - w/2 && mX <= x + w/2 && mY >= y - h/2 && mY <= y + h/2) {
      return true;
    } else {
      return false;
    }
-  } }
+  }
+}

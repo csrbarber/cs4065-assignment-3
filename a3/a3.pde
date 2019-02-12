@@ -1,9 +1,9 @@
 import javax.swing.JOptionPane;
 
-// TODO Commented out for debugging
-//int NUM_TRIALS = 21;
-int NUM_TRIALS = 5;
+int NUM_TRIALS = 21 ;
 int NUM_ROUNDS = 4;
+int AREA_CLICK_DIAMETER = 25;
+boolean VIEW_CLICK_AREA = true;
 
 ArrayList<Button> gridButtons;
 String user;
@@ -23,7 +23,7 @@ void setup() {
   String buttonText = "Please select highlighted buttons as quickly and accurately as possible.\n" +
     "This is round " + (round + 1) + " of " + NUM_ROUNDS + ".\n" + "Click OK to begin practice.";
   JOptionPane.showConfirmDialog(null, buttonText, "", JOptionPane.DEFAULT_OPTION);
-
+  
   gridButtons = new ArrayList<Button>();
   
   int startX = (int) width/2 - 80;
@@ -42,10 +42,19 @@ void setup() {
 }
 
 void draw() {
+  if (VIEW_CLICK_AREA) {
+     background(204); 
+   }
+  
   for (Button b : gridButtons) {
       b.display();
   }
   
+  if (VIEW_CLICK_AREA) {
+    fill(255, 255, 0, 250);
+    ellipse(mouseX, mouseY, AREA_CLICK_DIAMETER, AREA_CLICK_DIAMETER);
+  }
+   
   if (trialNum == NUM_TRIALS) {
     trialNum = 0;
     round++;
@@ -57,6 +66,11 @@ void draw() {
       "This is round " + (round + 1) + " of " + NUM_ROUNDS + ".\n" + "Click OK to begin";
       if (round == 2) {
         buttonText += " practice.";
+        if (condition == 0) {
+          condition = 1;
+        } else {
+          condition = 0;
+        }
       } else {
         buttonText += " evaluation.";
       }
@@ -67,39 +81,69 @@ void draw() {
 
 
 void mousePressed() {
-  for (Button button : gridButtons) {
-      if (button.overButton()) {
-        button.highlight = true;
+  // Condition 0 is default click
+  if (condition == 0) {
+    if  (currentTarget.overButton(mouseX, mouseY)) {
+      completeTrial();
+    } else {
+      numErrors++;
+    }
+  } else {
+    // Condition 1 is area click
+    boolean hit = false;
+    int d;
+    //  Determine if points along circumference are over currentTarget()
+    for (d = 0; d < 360; d++) {
+      float rads = radians(d);
+      int x = (int) (((AREA_CLICK_DIAMETER/2) * cos(rads)) + mouseX);
+      int y = (int) (((AREA_CLICK_DIAMETER/2) * sin(rads)) + mouseY);
+      if (currentTarget.overButton(x, y)) { 
+        hit = true;
+        break;
       }
+    }
+    
+    // If point on circumference over currentTarget complete the trial
+    if (hit) {
+      completeTrial();
+    } else {
+      numErrors++;
+    }
+  }
+}
+
+/*
+Swap currentTarget with previousTarget.
+Select new random currentTarget.
+Display stats for currentTarget and reset variables for next target.
+*/
+void completeTrial() {
+  int randomIndex = (int) random(gridButtons.size());
+  // Ensure we don't highlight the same target
+  while (randomIndex == gridButtons.indexOf(currentTarget)) {
+    randomIndex = (int) random(gridButtons.size());
   }
   
-  if (currentTarget.overButton()) {
-    int randomIndex = (int) random(gridButtons.size());
-    while (randomIndex == gridButtons.indexOf(currentTarget)) {
-      randomIndex = (int) random(gridButtons.size());
+  // Round 0 & 2 are practice rounds
+  if (round != 0 && round != 2) {
+    // For first trial of each round startTime is unset
+    int elapsedTime = millis() - startTime;
+    startTime = millis();
+    float targetDistance = sqrt(sq(currentTarget.x - previousTarget.x) + sq(currentTarget.y - previousTarget.y));
+    if (trialNum != 0) {
+      print("user#: " + user + " trial# " + trialNum
+            + " condition: " + condition + " elapsedTime: " + elapsedTime
+            + " numberOferrors: " + numErrors + " distanceToTarget: " + targetDistance + "\n");
     }
-    
-    // Round 0 & 2 are practice rounds
-    if (round != 0 && round != 2) {
-      int elapsedTime = millis() - startTime;
-      startTime = millis();
-      float targetDistance = sqrt(sq(currentTarget.x - previousTarget.x) + sq(currentTarget.y - previousTarget.y));
-      if (trialNum != 0) {
-        print("user#: " + user + " trial# " + trialNum
-              + " condition: " + condition + " elapsedTime: " + elapsedTime
-              + " numberOferrors: " + numErrors + " distanceToTarget: " + targetDistance + "\n");
-      }
-    }
-        
-    currentTarget.highlight = false;
-    previousTarget = currentTarget;
-    
-    currentTarget = gridButtons.get(randomIndex);
-    currentTarget.highlight = true;
-    
-    trialNum++;
-    numErrors = 0;
-  } else {
-    numErrors++;
   }
+  
+  // Update currentTarget and previousTarget on target click
+  currentTarget.highlight = false;
+  previousTarget = currentTarget;
+  currentTarget = gridButtons.get(randomIndex);
+  currentTarget.highlight = true;
+  
+  // Reset trial stats
+  trialNum++;
+  numErrors = 0;
 }
