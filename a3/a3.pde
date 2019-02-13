@@ -3,7 +3,7 @@ import javax.swing.JOptionPane;
 int NUM_TRIALS = 21 ;
 int NUM_ROUNDS = 4;
 int AREA_CLICK_DIAMETER = 25;
-boolean VIEW_CLICK_AREA = true;
+boolean VIEW_CLICK_AREA = false;
 
 ArrayList<Button> gridButtons;
 String user;
@@ -11,9 +11,7 @@ int condition, round, trialNum, startTime, numErrors;
 Button previousTarget, currentTarget;
 
 void setup() {
-  // TODO Commented out for debugging
-  //fullScreen();
-  size(700, 700);
+  fullScreen();
   background(204);
   round = 0;
   trialNum = 0;
@@ -24,15 +22,15 @@ void setup() {
     "This is round " + (round + 1) + " of " + NUM_ROUNDS + ".\n" + "Click OK to begin practice.";
   JOptionPane.showConfirmDialog(null, buttonText, "", JOptionPane.DEFAULT_OPTION);
   
-  gridButtons = new ArrayList<Button>();
   
+  // Create grid of buttons
+  gridButtons = new ArrayList<Button>();
   int startX = (int) width/2 - 80;
   int startY = (int) height/2 - 80;
-
   for (int i = 0; i < 5; i++) {
     for (int j = 0; j < 5; j++) {
       // 15 padding + 12.5 radius + 12.5 radius = 40 spacing
-        gridButtons.add(new Button(startX + i*40, startY + j*40, 25, 25));
+      gridButtons.add(new Button(startX + i*40, startY + j*40, 25, 25));
     }  
   }
   
@@ -42,7 +40,8 @@ void setup() {
 }
 
 void draw() {
-  if (VIEW_CLICK_AREA) {
+  // Tool for debugging
+  if (VIEW_CLICK_AREA && condition == 1) {
      background(204); 
    }
   
@@ -50,15 +49,18 @@ void draw() {
       b.display();
   }
   
-  if (VIEW_CLICK_AREA) {
+  // Tool for debugging
+  if (VIEW_CLICK_AREA && condition == 1) {
     fill(255, 255, 0, 250);
     ellipse(mouseX, mouseY, AREA_CLICK_DIAMETER, AREA_CLICK_DIAMETER);
   }
-   
+  
+  // Go to next trial
   if (trialNum == NUM_TRIALS) {
     trialNum = 0;
     round++;
     
+    // If final round exit, else go to next round
     if (round == NUM_ROUNDS) {
       exit();
     } else {
@@ -92,7 +94,7 @@ void mousePressed() {
     // Condition 1 is area click
     boolean hit = false;
     int d;
-    //  Determine if points along circumference are over currentTarget()
+    //  Determine if points along circumference are over currentTarget
     for (d = 0; d < 360; d++) {
       float rads = radians(d);
       int x = (int) (((AREA_CLICK_DIAMETER/2) * cos(rads)) + mouseX);
